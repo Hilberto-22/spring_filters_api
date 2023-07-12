@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.spring.filtros.domain.Category;
 import com.spring.filtros.model.EqualFilterModel;
 import com.spring.filtros.model.FilterModel;
+import com.spring.filtros.model.InFilterModel;
 import com.spring.filtros.model.PageModel;
 import com.spring.filtros.repository.CategoryRepository;
 import com.spring.filtros.specification.CategorySpecification;
@@ -32,17 +33,18 @@ public class CategoryService implements ListService<Category>{
         Pageable pageable = filterModel.toPageable();
 
 
-        Specification<Category> spec = null;
+        Specification<Category> spec = Specification.where(null);
 
-        List<EqualFilterModel> equalFilterModels = filterModel.gEqualFilterModels();
+        List<EqualFilterModel> equalFilters = filterModel.gEqualFilterModels();
+        List<InFilterModel> inFilters = filterModel.getInFilters();
 
-        if(!equalFilterModels.isEmpty()){
-            EqualFilterModel firstEqualFilter = equalFilterModels.get(0);
-            spec = CategorySpecification.equal(firstEqualFilter);
+
+        for (EqualFilterModel equalFilterModel : equalFilters) {
+            spec = spec.and(CategorySpecification.equal(equalFilterModel));
         }
 
-        for(int i = 1; i < equalFilterModels.size(); i++){
-            spec = spec.and(CategorySpecification.equal(equalFilterModels.get(i)));
+        for (InFilterModel inFilterModel : inFilters) {
+            spec = spec.and(CategorySpecification.in(inFilterModel));
         }
 
         Page<Category> categoryPage = categoryRepository.findAll(spec, pageable);

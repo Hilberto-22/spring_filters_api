@@ -1,6 +1,7 @@
 package com.spring.filtros.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,7 @@ public class FilterModel {
     private Integer page;
     private String sort;
     private String equalFilters;
+    private String inFilterModel;
 
 
     //construtor para captar os parametros que vem da url
@@ -27,6 +29,7 @@ public class FilterModel {
         this.page = params.containsKey(PAGE_KEY) ? Integer.valueOf(params.get(PAGE_KEY)) : DEFAULT_PAGE;
         this.sort = params.containsKey(SORT_KEY) ? params.get(SORT_KEY) : DEFAULT_SORT;
         this.equalFilters = params.containsKey(EQUAL_FILTERS_KEY) ? params.get(EQUAL_FILTERS_KEY) : DEFAULT_EQUAL_FILTERS;
+        this.inFilterModel = params.containsKey(IN_FILTERS_KEY) ? params.get(IN_FILTERS_KEY) : DEFAULT_IN_FILTERS;
     }
 
     public Pageable toPageable(){
@@ -106,4 +109,40 @@ public class FilterModel {
         return orders;
     }
 
+    public List<InFilterModel> getInFilters(){
+
+        List<InFilterModel> inFilterModels =  new ArrayList<InFilterModel>();
+        
+        if(inFilterModel == null || inFilterModel.trim().isEmpty())
+            return inFilterModels;
+
+        String[] inFilterParam = inFilterModel.split(";");
+
+        for(String param : inFilterParam){
+
+            if(param.contains(":")){
+
+              String[] elements = param.split(":");
+                if(elements.length ==2){
+                    String column = elements[0];
+                    List<String> values = Arrays.asList(elements[1].split(","));
+
+                    inFilterModels.add(new InFilterModel(column, values, true));
+                }
+            
+            }
+            if(param.contains("~")){
+
+                String[] elements = param.split("~");
+                if(elements.length ==2){
+                    String column = elements[0];
+                    List<String> values = Arrays.asList(elements[1].split(","));
+
+                    inFilterModels.add(new InFilterModel(column, values, false));
+                }
+            }
+        }
+        return inFilterModels;
+
+    }
 }

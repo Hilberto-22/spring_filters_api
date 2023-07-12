@@ -11,19 +11,20 @@ import org.springframework.stereotype.Service;
 import com.spring.filtros.domain.Product;
 import com.spring.filtros.model.EqualFilterModel;
 import com.spring.filtros.model.FilterModel;
+import com.spring.filtros.model.InFilterModel;
 import com.spring.filtros.model.PageModel;
 import com.spring.filtros.repository.ProductRepository;
 import com.spring.filtros.specification.ProductSpecification;
 
 @Service
-public class ProductService implements ListService<Product>{
+public class ProductService implements ListService<Product> {
 
     @Autowired
     private ProductRepository productRepository;
 
     @Override
     public List<Product> list() {
-       List<Product> products = productRepository.findAll();
+        List<Product> products = productRepository.findAll();
         return products;
     }
 
@@ -31,22 +32,22 @@ public class ProductService implements ListService<Product>{
     public PageModel<Product> list(FilterModel filterModel) {
         Pageable pageable = filterModel.toPageable();
 
-        Specification<Product> spec = null;
+        Specification<Product> spec = Specification.where(null);
 
         List<EqualFilterModel> equalFilterModels = filterModel.gEqualFilterModels();
+        List<InFilterModel> inFilterModels = filterModel.getInFilters();
 
-        if(!equalFilterModels.isEmpty()){
-            EqualFilterModel firstEqualFilter = equalFilterModels.get(0);
-            spec = ProductSpecification.equal(firstEqualFilter);
+        for (EqualFilterModel equalFilterModel : equalFilterModels) {
+            spec = spec.and(ProductSpecification.equal(equalFilterModel));
         }
 
-        for(int i = 1; i < equalFilterModels.size(); i++){
-            spec = spec.and(ProductSpecification.equal(equalFilterModels.get(i)));
+        for (InFilterModel inFilterModel : inFilterModels) {
+            spec = spec.and(ProductSpecification.in(inFilterModel));
         }
 
         Page<Product> productPage = productRepository.findAll(spec, pageable);
         PageModel<Product> pageModel = new PageModel<>(productPage);
         return pageModel;
     }
-    
+
 }
